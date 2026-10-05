@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ship, Captain &amp; Crew</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Alegreya+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#d6e5e2; --bg2:#b4cfcb; --ink:#10283a; --muted:#4a6670;
+  --brass:#946815; --brass-ink:#fff8e6; --red:#a3322b; --sea:#2f7f75;
+  --panel:rgba(16,40,58,.06); --line:rgba(16,40,58,.22);
+  --die:#fffaf0; --pip:#10283a; --die-edge:#cbbf9f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1f2c; --bg2:#173d52; --ink:#efe6d2; --muted:#94afb8;
+    --brass:#d9ad52; --brass-ink:#1a1206; --red:#d0513f; --sea:#5fb3a6;
+    --panel:rgba(239,230,210,.05); --line:rgba(239,230,210,.18);
+    --die:#efe6d2; --pip:#16222b; --die-edge:#b8a77f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1f2c; --bg2:#173d52; --ink:#efe6d2; --muted:#94afb8;
+  --brass:#d9ad52; --brass-ink:#1a1206; --red:#d0513f; --sea:#5fb3a6;
+  --panel:rgba(239,230,210,.05); --line:rgba(239,230,210,.18);
+  --die:#efe6d2; --pip:#16222b; --die-edge:#b8a77f;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0;color:var(--ink);font-family:"Alegreya Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:17px;line-height:1.45;min-height:100vh;
+  background:
+    radial-gradient(120% 60% at 50% -5%, var(--bg2), transparent 70%),
+    var(--bg);
+}
+main{max-width:560px;margin:0 auto;padding:18px 16px 48px}
+h1{font-family:"Pirata One",Georgia,serif;font-weight:400;font-size:clamp(2.4rem,10vw,3.4rem);line-height:.95;margin:0;letter-spacing:.01em}
+.sub{margin:.35rem 0 0;color:var(--muted)}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:3px solid var(--sea);outline-offset:3px}
+
+/* Scoreboard */
+.score{display:flex;justify-content:space-between;align-items:center;margin:18px 0 6px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.side{display:flex;flex-direction:column;gap:4px}
+.side:last-child{align-items:flex-end}
+.side b{font-weight:700}
+.coins{display:flex;gap:5px}
+.coin{width:20px;height:20px}
+.vs{font-family:"Pirata One",Georgia,serif;font-size:1.3rem;color:var(--muted)}
+
+/* Banner */
+.banner{margin:18px 0 4px;min-height:5.4em}
+.banner h2{font-family:"Pirata One",Georgia,serif;font-weight:400;font-size:1.9rem;line-height:1.05;margin:0}
+.banner p{margin:.25rem 0 0;color:var(--muted)}
+.banner .target{color:var(--ink);font-weight:700}
+.rolls{display:inline-flex;gap:6px;vertical-align:middle;margin-left:6px}
+.rolls i{width:10px;height:10px;border-radius:50%;border:2px solid var(--brass);display:inline-block}
+.rolls i.on{background:var(--brass)}
+
+/* The articles: ship, captain, crew */
+.articles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 8px;padding:12px;border:2px solid var(--brass);border-radius:6px;position:relative}
+.articles::before{content:"";position:absolute;inset:4px;border:1px solid var(--brass);border-radius:3px;opacity:.45;pointer-events:none}
+.slot{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 2px 4px;text-align:center}
+.slot svg.icon{width:46px;height:36px;color:var(--muted);transition:color .3s}
+.slot.got svg.icon{color:var(--brass)}
+.slot .name{font-weight:700;font-size:.95rem}
+.slot .need{color:var(--muted);font-size:.85rem;margin-top:-4px}
+.hole{width:52px;height:52px;border:2px dashed var(--line);border-radius:10px;display:grid;place-items:center;font-family:"Pirata One",Georgia,serif;font-size:1.5rem;color:var(--muted)}
+
+/* Dice */
+.tray-head{display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;gap:12px}
+.tray-head span{color:var(--muted);font-size:.95rem}
+.treasure{font-family:"Pirata One",Georgia,serif;font-size:1.6rem;color:var(--brass);white-space:nowrap}
+.tray{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;min-height:76px;align-items:center;padding:14px 8px;margin-top:6px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
+.die{
+  width:56px;height:56px;padding:7px;border-radius:11px;border:0;cursor:default;
+  background:var(--die);box-shadow:inset 0 -4px 0 var(--die-edge),0 3px 0 rgba(0,0,0,.25);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);place-items:center;position:relative;
+  transition:transform .15s;
+}
+.slot .die{width:52px;height:52px}
+.die .p{width:9px;height:9px;border-radius:50%;background:var(--pip);visibility:hidden}
+.die .p.on{visibility:visible}
+.die[data-v="6"] .p.on,.die[data-v="5"] .p.on,.die[data-v="4"] .p.on{background:var(--pip)}
+.die.blank{opacity:.45}
+.die.tap{cursor:pointer}
+.die.tap:hover{transform:translateY(-2px)}
+.die.held{box-shadow:inset 0 -4px 0 var(--die-edge),0 0 0 3px var(--sea),0 3px 0 rgba(0,0,0,.25);transform:translateY(-4px)}
+.die.held::after{content:"kept";position:absolute;bottom:-21px;left:50%;transform:translateX(-50%);font-size:.75rem;font-weight:700;color:var(--sea)}
+.die.locked{box-shadow:inset 0 -4px 0 var(--die-edge),0 0 0 3px var(--brass)}
+.die.drag{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
+.die.dragging-src{visibility:hidden}
+.ghost{position:fixed;left:0;top:0;z-index:50;pointer-events:none;margin:0;
+  box-shadow:inset 0 -4px 0 var(--die-edge),0 14px 24px rgba(0,0,0,.35);cursor:grabbing}
+.slot.next .hole{border-color:var(--brass);color:var(--brass)}
+.slot.ok .hole{border-style:solid;border-color:var(--sea);color:var(--sea)}
+.slot.over .hole{background:color-mix(in srgb,var(--sea) 25%,transparent);transform:scale(1.08)}
+.hole{transition:transform .12s,background .12s}
+.slot.nope .hole{animation:nope .35s}
+@keyframes nope{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.die.rolling{animation:tumble .14s linear infinite}
+.die.landed{animation:land .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes tumble{0%{transform:rotate(-10deg) translateY(-3px)}50%{transform:rotate(9deg) translateY(2px)}100%{transform:rotate(-10deg) translateY(-3px)}}
+@keyframes land{0%{transform:scale(.4) rotate(-30deg)}100%{transform:scale(1) rotate(0)}}
+
+/* Controls */
+.controls{display:flex;gap:10px;margin-top:24px}
+.btn{flex:1;min-height:52px;border-radius:12px;font-weight:800;font-size:1.05rem;cursor:pointer;border:2px solid var(--brass);background:transparent;padding:10px 14px}
+.btn.primary{background:var(--brass);color:var(--brass-ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn[hidden]{display:none}
+
+/* Log and rules */
+.log{list-style:none;margin:22px 0 0;padding:0;font-size:.95rem}
+.log li{padding:7px 0;border-top:1px solid var(--line);color:var(--muted)}
+.log li:first-child{color:var(--ink)}
+details{margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:700}
+details p,details ul{margin:.6rem 0;color:var(--muted)}
+details ul{padding-left:1.2rem}
+.foot{margin-top:18px;color:var(--muted);font-size:.9rem;display:flex;justify-content:space-between}
+
+.mute{background:none;border:1px solid var(--line);border-radius:999px;padding:2px 12px;color:var(--muted);font-size:.9rem;cursor:pointer}
+.foot{align-items:center;gap:8px}
+.win h2{color:var(--brass);font-size:2.4rem}
+@media (prefers-reduced-motion: reduce){
+  .die,.slot svg.icon{transition:none}
+  .die.rolling,.die.landed{animation:none}
+}
+@media (max-width:380px){
+  .die{width:50px;height:50px}
+  .tray{gap:9px}
+  .slot svg.icon{width:40px}
+}
+
+/* Menu */
+[hidden]{display:none !important}
+.menu{margin-top:22px;display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:700}
+.input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-height:50px;width:100%}
+.input:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.code-input{text-transform:uppercase;letter-spacing:.25em;font-weight:800}
+.join-row{display:flex;gap:10px}
+.join-row .btn{flex:0 0 auto;min-width:96px}
+.or{color:var(--muted);text-align:center;margin:2px 0}
+.msg{min-height:1.5em;color:var(--red);font-weight:500}
+.msg.ok{color:var(--sea)}
+.hostbox{border:2px solid var(--brass);border-radius:6px;padding:18px;text-align:center;display:flex;flex-direction:column;gap:12px}
+.hostbox .code{font-family:"Pirata One",Georgia,serif;font-size:3.4rem;line-height:1;letter-spacing:.12em;color:var(--brass)}
+.hostbox p{margin:0;color:var(--muted)}
+.row{display:flex;gap:10px}
+.status{margin:6px 2px 0;font-size:.95rem;color:var(--sea);font-weight:500;min-height:1.4em}
+.status.bad{color:var(--red)}
+.linkbtn{background:none;border:1px solid var(--line);border-radius:999px;padding:2px 12px;color:var(--muted);font-size:.9rem;cursor:pointer}
+</style>
+
+</head>
+<body>
+<main>
+  <header>
+    <h1>Ship, Captain &amp; Crew</h1>
+    <p class="sub">Three rolls to raise a ship, sign a captain and press a crew. Then fill the hold.</p>
+  </header>
+
+  <!-- MENU -->
+  <section id="menu" class="menu">
+    <div class="field">
+      <label for="nameInput">Your name</label>
+      <input class="input" id="nameInput" maxlength="16" autocomplete="nickname" placeholder="Pirate name">
+    </div>
+
+    <div id="menuChoices" class="menu">
+      <button class="btn primary" id="soloBtn">Play Captain Rook</button>
+      <button class="btn" id="hostBtn">Host an online game</button>
+      <p class="or">or join a friend's game</p>
+      <div class="join-row">
+        <input class="input code-input" id="codeInput" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" aria-label="Game code">
+        <button class="btn primary" id="joinBtn">Join</button>
+      </div>
+    </div>
+
+    <div id="hostBox" class="hostbox" hidden>
+      <p>Your game code</p>
+      <div class="code" id="hostCode"></div>
+      <p>Send this code or the invite link to your opponent. The game starts when they join.</p>
+      <div class="row">
+        <button class="btn primary" id="shareBtn">Share invite link</button>
+        <button class="btn" id="cancelHostBtn">Cancel</button>
+      </div>
+    </div>
+
+    <p class="msg" id="menuMsg" aria-live="polite"></p>
+
+    <details>
+      <summary>How to play</summary>
+      <p>You roll five dice and get three rolls per turn.</p>
+      <ul>
+        <li>A 6 is your ship. You need it before anything else counts.</li>
+        <li>Once you have a ship, a 5 is your captain.</li>
+        <li>Once you have a captain, a 4 is your crew.</li>
+        <li>Drag a matching die into its slot to claim it. One roll can land all three if you place them in order. Any die left in the tray gets rerolled.</li>
+        <li>With ship, captain and crew aboard, the other two dice are your treasure. Keep it, or use any rolls you have left to reroll. Tap a treasure die to keep it while rerolling the other.</li>
+        <li>Miss any of the three by the end of your third roll and you sink with nothing.</li>
+      </ul>
+      <p>Each round both players take a turn. The bigger haul wins the round, and the first to win three rounds takes the voyage. Who goes first switches every round.</p>
+    </details>
+  </section>
+
+  <!-- GAME -->
+  <section id="game" hidden>
+    <section class="score" aria-label="Rounds won, first to 3 takes the voyage">
+      <div class="side"><b>You</b><div class="coins" id="coinsMe"></div></div>
+      <div class="vs">vs</div>
+      <div class="side"><b id="oppName"></b><div class="coins" id="coinsOpp"></div></div>
+    </section>
+    <p class="status" id="status" aria-live="polite"></p>
+
+    <section class="banner" id="banner" aria-live="polite"></section>
+
+    <section class="articles" id="articles" aria-label="Ship, captain and crew"></section>
+
+    <div class="tray-head">
+      <span id="trayLabel">Loose dice</span>
+      <span class="treasure" id="treasure"></span>
+    </div>
+    <section class="tray" id="tray" aria-label="Dice"></section>
+
+    <div class="controls">
+      <button class="btn primary" id="rollBtn">Roll the dice</button>
+      <button class="btn" id="keepBtn" hidden>Keep treasure</button>
+      <button class="btn primary" id="nextBtn" hidden>Next round</button>
+    </div>
+
+    <ul class="log" id="log" aria-label="Ship's log"></ul>
+
+    <div class="foot">
+      <span id="round"></span>
+      <button class="linkbtn" id="muteBtn" aria-pressed="true">Sound on</button>
+      <button class="linkbtn" id="leaveBtn">Main menu</button>
+    </div>
+    <p class="foot"><span id="best"></span></p>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+/* ================= Constants ================= */
+const NEED=[["ship",6,"Ship"],["captain",5,"Captain"],["crew",4,"Crew"]];
+const PIPS={1:[4],2:[2,6],3:[2,4,6],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+const ICONS={
+  ship:'<svg class="icon" viewBox="0 0 64 48" aria-hidden="true"><path d="M5 31h54l-8 11H13z" fill="currentColor"/><path d="M31 3v28" stroke="currentColor" stroke-width="2.5"/><path d="M33.5 6c10 4 14.5 12 14.5 22H33.5z" fill="currentColor" opacity=".85"/><path d="M28.5 10c-7 3-11 10-11 18h11z" fill="currentColor" opacity=".6"/><path d="M31 3l9 3-9 3z" fill="var(--red)"/></svg>',
+  captain:'<svg class="icon" viewBox="0 0 64 48" aria-hidden="true"><path d="M14 31c2-11 9-19 18-19s16 8 18 19c-6-1.5-12-2-18-2s-12 .5-18 2z" fill="currentColor"/><path d="M3 34c6-2 12-10 15-14 2 6 7 9 14 9s12-3 14-9c3 4 9 12 15 14-9 3-18 5-29 5S12 37 3 34z" fill="currentColor" opacity=".8"/><circle cx="32" cy="21" r="3.6" fill="var(--bg)"/><path d="M28 27l8-3M28 24l8 3" stroke="var(--bg)" stroke-width="1.6"/></svg>',
+  crew:'<svg class="icon" viewBox="0 0 64 52" aria-hidden="true"><g stroke="currentColor" stroke-linecap="round" fill="none"><path d="M10 6l32 32" stroke-width="3.5"/><path d="M54 6L22 38" stroke-width="3.5"/><path d="M35 43l10-10M29 43L19 33" stroke-width="3"/><path d="M44 40l7 7M20 40l-7 7" stroke-width="4"/></g></svg>'
+};
+const PREFIX="shipcaptcrew-";
+const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $=id=>document.getElementById(id);
+const wait=ms=>new Promise(r=>setTimeout(r,reduceMotion?Math.min(ms,250):ms));
+const d6=()=>1+Math.floor(Math.random()*6);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const other=p=>p==="a"?"b":"a";
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const cleanName=s=>String(s||"").replace(/[<>]/g,"").trim().slice(0,16);
+function joinList(a){return a.length<2?a[0]:a.slice(0,-1).join(", ")+" and "+a[a.length-1]}
+
+function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function recall(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function loadBest(){return parseInt(recall("scc-best")||"0",10)||0}
+function saveBest(t){if(t>loadBest())store("scc-best",String(t))}
+
+/* ================= Sound (Web Audio, no files) ================= */
+let AC=null, noiseBuf=null, muted=recall("scc-mute")==="1";
+function ac(){
+  if(muted) return null;
+  if(!AC){const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();}
+  if(AC.state==="suspended") AC.resume();
+  if(!noiseBuf){
+    noiseBuf=AC.createBuffer(1,AC.sampleRate*0.25,AC.sampleRate);
+    const ch=noiseBuf.getChannelData(0); for(let i=0;i<ch.length;i++) ch[i]=Math.random()*2-1;
+  }
+  return AC;
+}
+function tick(a,t,freq,vol,dur){
+  const src=a.createBufferSource(); src.buffer=noiseBuf;
+  const f=a.createBiquadFilter(); f.type="bandpass"; f.frequency.value=freq; f.Q.value=3.5;
+  const g=a.createGain();
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  src.connect(f).connect(g).connect(a.destination);
+  src.start(t,Math.random()*0.2,dur+0.02);
+}
+function thump(a,t,from,to,vol,dur){
+  const o=a.createOscillator(), g=a.createGain();
+  o.type="sine"; o.frequency.setValueAtTime(from,t); o.frequency.exponentialRampToValueAtTime(to,t+dur);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+0.02);
+}
+function rattleSound(ms,n){
+  const a=ac(); if(!a) return;
+  const t0=a.currentTime, count=Math.round(ms/22)*Math.min(n,3)/2;
+  for(let i=0;i<count;i++) tick(a,t0+Math.random()*ms/1000,1800+Math.random()*2800,0.12+Math.random()*0.18,0.025+Math.random()*0.02);
+}
+function landSound(n){
+  const a=ac(); if(!a) return;
+  const t0=a.currentTime;
+  for(let i=0;i<n;i++){
+    const t=t0+i*0.045+Math.random()*0.03;
+    tick(a,t,1100+Math.random()*900,0.45,0.06);
+    thump(a,t,220,90,0.35,0.09);
+    if(Math.random()<.6) tick(a,t+0.07+Math.random()*0.05,2400,0.12,0.03);
+  }
+}
+function placeSound(){
+  const a=ac(); if(!a) return;
+  const t=a.currentTime; thump(a,t,160,70,0.5,0.16); tick(a,t,700,0.35,0.08);
+}
+function toggleMute(){muted=!muted; store("scc-mute",muted?"1":"0"); if(!muted) placeSound(); updateMuteBtn();}
+function updateMuteBtn(){const b=$("muteBtn"); b.textContent=muted?"Sound off":"Sound on"; b.setAttribute("aria-pressed",String(!muted));}
+
+/* ================= State =================
+   mode: "solo" (vs Captain Rook), "host" or "guest" (online).
+   G is the authoritative game (solo and host). V is what this screen shows.
+   Player keys are "a" (you in solo, the host online) and "b". */
+let mode=null, me="a", G=null, V=null;
+let peer=null, conn=null, joinTimer=null, netDown=false;
+let localHint=null, fresh=new Set();
+const queue=[]; let running=false;
+
+const hasK=(S,k)=>S.dice.some(d=>d.lock===k);
+const isQual=S=>NEED.every(([k])=>hasK(S,k));
+const cargoOf=S=>S.dice.filter(d=>!d.lock);
+const treasureOf=S=>isQual(S)?cargoOf(S).reduce((a,d)=>a+d.v,0):0;
+const nextNeedOf=S=>NEED.find(([k])=>!hasK(S,k));
+function placeProblemOf(S,i,k){
+  const d=S.dice[i], idx=NEED.findIndex(n=>n[0]===k);
+  if(!d||idx<0) return "That die can't go there.";
+  const [,v,label]=NEED[idx];
+  if(d.lock) return "That die is already placed.";
+  if(hasK(S,k)) return `You already have a ${label.toLowerCase()}.`;
+  for(let j=0;j<idx;j++) if(!hasK(S,NEED[j][0])) return `You need a ${NEED[j][2].toLowerCase()} before a ${label.toLowerCase()}.`;
+  if(d.v!==v) return `The ${label.toLowerCase()} needs a ${v}.`;
+  return null;
+}
+function nm(p){return p===me?"You":(V&&V.names[p])||"Opponent"}
+
+/* ================= Authoritative game logic (solo + host) ================= */
+function addLog(p,text){G.log.unshift([p,text]); G.log=G.log.slice(0,7);}
+
+function newVoyage(names){
+  G={round:1,wins:{a:0,b:0},first:"a",names,log:[],scores:{},phase:"play",over:false};
+  startRound();
+}
+function startRound(){
+  G.scores={}; G.order=G.first==="a"?["a","b"]:["b","a"]; G.idx=0;
+  startTurn();
+}
+function startTurn(){
+  G.turn=G.order[G.idx]; G.rolls=3; G.rolled=false; G.phase="play";
+  G.dice=Array.from({length:5},()=>({v:0,lock:null,hold:false}));
+  commit();
+  if(mode==="solo"&&G.turn==="b") rookTurn();
+}
+function applyLocks(){
+  const got=[];
+  for(const [k,v] of NEED){
+    if(hasK(G,k)) continue;
+    const i=G.dice.findIndex(x=>!x.lock&&x.v===v);
+    if(i<0) break;
+    G.dice[i].lock=k; G.dice[i].hold=false; got.push(i);
+  }
+  return got;
+}
+function doRoll(who){
+  if(!G||G.phase!=="play"||G.turn!==who||G.rolls<=0) return false;
+  const q=isQual(G), idx=[];
+  G.dice.forEach((d,i)=>{if(!d.lock&&!(q&&d.hold)) idx.push(i)});
+  if(!idx.length) return false;
+  if(!q) G.dice.forEach(d=>d.hold=false);
+  idx.forEach(i=>G.dice[i].v=d6());
+  G.rolls--; G.rolled=true;
+  let placed=[];
+  if(mode==="solo"&&who==="b"){
+    placed=applyLocks();
+    if(placed.length){
+      addLog("b",`found a ${joinList(placed.map(i=>NEED.find(n=>n[0]===G.dice[i].lock)[2].toLowerCase()))}.`);
+      if(isQual(G)) addLog("b",`crewed up with ${treasureOf(G)} gold in the hold.`);
+    }
+  }
+  commit({type:"roll",idx,placed});
+  return true;
+}
+function doPlace(who,i,k){
+  if(!G||G.phase!=="play"||G.turn!==who||!G.rolled||isQual(G)) return;
+  if(placeProblemOf(G,i,k)) return;
+  G.dice[i].lock=k; G.dice[i].hold=false;
+  addLog(who,{ship:"launched a ship.",captain:"signed a captain.",crew:"pressed a crew."}[k]);
+  if(isQual(G)) addLog(who,`crewed up with ${treasureOf(G)} gold in the hold.`);
+  commit({type:"place",idx:[i]});
+}
+function doHold(who,i){
+  if(!G||G.phase!=="play"||G.turn!==who||!isQual(G)||G.rolls===0) return;
+  const d=G.dice[i]; if(!d||d.lock) return;
+  d.hold=!d.hold; commit();
+}
+function doKeep(who){
+  if(!G||G.phase!=="play"||G.turn!==who||!G.rolled) return;
+  if(!isQual(G)&&G.rolls>0) return;
+  endTurn();
+}
+function doNext(){
+  if(!G||G.phase!=="roundEnd") return;
+  if(G.over){newVoyage(G.names); return;}
+  G.round++; G.first=other(G.first); startRound();
+}
+function endTurn(){
+  const who=G.turn, t=treasureOf(G);
+  G.scores[who]=t;
+  addLog(who,t?`banked ${t} gold.`:"sank with nothing.");
+  G.idx++;
+  if(G.idx<2){
+    G.phase="between"; commit({type:"end",who,t});
+    const tok=G; setTimeout(()=>{if(G===tok&&G.phase==="between") startTurn()},reduceMotion?300:1200);
+  } else {
+    const a=G.scores.a,b=G.scores.b;
+    if(a>b){G.wins.a++; G.roundMsg=["a",`took round ${G.round}, ${a} to ${b}.`]}
+    else if(b>a){G.wins.b++; G.roundMsg=["b",`took round ${G.round}, ${b} to ${a}.`]}
+    else G.roundMsg=[null,`Round ${G.round} was a tie at ${a}.`];
+    G.log.unshift(G.roundMsg); G.log=G.log.slice(0,7);
+    G.over=G.wins.a>=3||G.wins.b>=3;
+    G.phase="roundEnd";
+    commit({type:"end",who,t});
+  }
+}
+
+// Captain Rook, the computer opponent (solo only)
+async function rookTurn(){
+  const tok=G;
+  await wait(900);
+  while(G===tok&&G.turn==="b"&&G.phase==="play"&&G.rolls>0){
+    doRoll("b");
+    await wait(1300);
+    if(G!==tok) return;
+    if(G.rolls===0) break;
+    if(isQual(G)){
+      const t=treasureOf(G), target=G.scores.a;
+      if(target!==undefined?t>target:t>=8) break;
+      cargoOf(G).forEach(d=>d.hold=target!==undefined?d.v===6:d.v>=5);
+      if(cargoOf(G).every(d=>d.hold)) break;
+      commit();
+    }
+    await wait(600);
+  }
+  if(G!==tok) return;
+  await wait(500);
+  if(G===tok&&G.turn==="b"&&G.phase==="play") endTurn();
+}
+
+// Push the authoritative state to this screen and, when hosting, to the guest.
+function commit(fx){
+  if(mode==="host"&&conn&&conn.open){try{conn.send({t:"state",g:G,fx:fx||null})}catch(e){}}
+  show(clone(G),fx);
+}
+
+/* ================= Actions ================= */
+function act(a){
+  if(netDown) return;
+  if(mode==="guest"){if(conn&&conn.open) conn.send({t:"act",...a}); return;}
+  apply(me,a);
+}
+function apply(who,a){
+  const i=Number.isInteger(a.i)&&a.i>=0&&a.i<5?a.i:-1;
+  const k=NEED.some(n=>n[0]===a.k)?a.k:null;
+  switch(a.a){
+    case "roll": doRoll(who); break;
+    case "place": if(i>=0&&k) doPlace(who,i,k); break;
+    case "hold": if(i>=0) doHold(who,i); break;
+    case "keep": doKeep(who); break;
+    case "next": doNext(); break;
+  }
+}
+
+/* ================= Presenting state (animations + sound) ================= */
+function show(state,fx){queue.push([state,fx]); if(!running) drain();}
+async function drain(){
+  running=true;
+  while(queue.length){const [s,fx]=queue.shift(); await present(s,fx);}
+  running=false; render();
+}
+async function present(s,fx){
+  localHint=null;
+  if(fx&&fx.type==="roll"){
+    const tmp=clone(s);
+    (fx.placed||[]).forEach(i=>tmp.dice[i].lock=null);
+    rattleSound(reduceMotion?200:470,fx.idx.length);
+    if(!reduceMotion){
+      for(let n=0;n<7;n++){
+        fx.idx.forEach(i=>{tmp.dice[i].v=d6(); tmp.dice[i].rolling=true});
+        V=tmp; render(); await new Promise(r=>setTimeout(r,65));
+      }
+    }
+    const landed=clone(s); (fx.placed||[]).forEach(i=>landed.dice[i].lock=null);
+    V=landed; fresh=new Set(fx.idx); render(); fresh.clear();
+    landSound(fx.idx.length);
+    if(fx.placed&&fx.placed.length){
+      await wait(450);
+      V=s; fresh=new Set(fx.placed); placeSound(); render(); fresh.clear();
+    } else V=s;
+  } else if(fx&&fx.type==="place"){
+    const already=V&&V.dice[fx.idx[0]]&&V.dice[fx.idx[0]].lock;
+    V=s; fresh=new Set(fx.idx); if(!already) placeSound(); render(); fresh.clear();
+  } else {
+    if(fx&&fx.type==="end"&&fx.who===me) saveBest(fx.t);
+    V=s; render();
+  }
+}
+
+/* ================= Rendering ================= */
+function dieHTML(d,i,opts={}){
+  const on=PIPS[d.v]||[];
+  const cls=["die"];
+  if(!d.v) cls.push("blank");
+  if(d.rolling) cls.push("rolling");
+  if(fresh.has(i)&&!d.rolling) cls.push("landed");
+  if(d.lock) cls.push("locked");
+  if(d.hold) cls.push("held");
+  if(opts.tap) cls.push("tap");
+  if(opts.drag) cls.push("drag");
+  let pips=""; for(let p=0;p<9;p++) pips+=`<span class="p${on.includes(p)?" on":""}"></span>`;
+  const label=d.v?`Die showing ${d.v}${d.hold?", kept":""}${opts.tap?". Tap to "+(d.hold?"reroll":"keep"):""}${opts.drag?". Drag to a slot, or press Enter to place it":""}`:"Die not rolled yet";
+  const focusable=opts.tap||opts.drag;
+  return `<button class="${cls.join(" ")}" data-v="${d.v}" data-i="${i}" aria-label="${label}" ${focusable?"":"tabindex=\"-1\""}>${pips}</button>`;
+}
+function coins(n){
+  let s="";
+  for(let i=0;i<3;i++) s+=`<svg class="coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="${i<n?"var(--brass)":"none"}" stroke="var(--brass)" stroke-width="2"/>${i<n?'<circle cx="10" cy="10" r="4.5" fill="none" stroke="var(--brass-ink)" stroke-width="1.2" opacity=".5"/>':""}</svg>`;
+  return s+`<span style="position:absolute;left:-9999px">${n} rounds won</span>`;
+}
+const myTurnNow=()=>V&&V.turn===me&&V.phase==="play"&&!running&&!netDown;
+const canDrag=()=>myTurnNow()&&V.rolled&&!isQual(V);
+function logLine(e){return e[0]?`${esc(nm(e[0]))} ${esc(e[1])}`:esc(e[1])}
+
+function render(){
+  const inGame=!!V;
+  $("menu").hidden=inGame; $("game").hidden=!inGame;
+  if(!inGame) return;
+  const opp=other(me), q=isQual(V);
+
+  $("oppName").textContent=V.names[opp];
+  $("coinsMe").innerHTML=coins(V.wins[me]);
+  $("coinsOpp").innerHTML=coins(V.wins[opp]);
+  $("round").textContent=`Round ${V.round}`;
+  $("best").textContent=`Your best haul: ${loadBest()}`;
+
+  const st=$("status");
+  if(mode==="solo"){st.textContent=""; st.className="status";}
+  else if(netDown){st.textContent=`Lost connection to ${V.names[opp]}.`; st.className="status bad";}
+  else {st.textContent=`Online with ${V.names[opp]}`; st.className="status";}
+
+  // Banner
+  const b=$("banner"); b.classList.remove("win");
+  const pips=Array.from({length:3},(_,i)=>`<i class="${i<V.rolls?"on":""}"></i>`).join("");
+  const rollsTag=`<span class="rolls" aria-label="${V.rolls} rolls left">${pips}</span>`;
+  const turnName=esc(V.names[V.turn]);
+  if(netDown){
+    b.innerHTML=`<h2>Connection lost</h2><p>Your opponent left or the connection dropped. Head back to the main menu to start a new game.</p>`;
+  } else if(V.phase==="roundEnd"){
+    const rm=logLine(V.roundMsg);
+    if(V.over){
+      const w=V.wins.a>=3?"a":"b";
+      b.classList.add("win");
+      b.innerHTML=`<h2>${w===me?"The voyage is yours!":esc(V.names[w])+" won the voyage"}</h2><p>${rm} Final count ${V.wins[me]} to ${V.wins[opp]}.</p>`;
+    } else {
+      const nf=other(V.first);
+      b.innerHTML=`<h2>${rm}</h2><p>${nf===me?"You go":esc(V.names[nf])+" goes"} first next round.</p>`;
+    }
+  } else if(V.phase==="between"){
+    const nx=V.order[V.idx];
+    b.innerHTML=`<h2>${nx===me?"Your turn is next":esc(V.names[nx])+"'s turn is next"}</h2><p>&nbsp;</p>`;
+  } else if(V.turn===me){
+    const n=nextNeedOf(V);
+    let hint;
+    if(localHint) hint=localHint;
+    else if(!V.rolled) hint="Roll to look for a ship.";
+    else if(q) hint=V.rolls?"Keep your treasure or reroll for more.":"That's your haul. Keep it to end your turn.";
+    else if(V.dice.some(d=>!d.lock&&d.v===n[1])) hint=`Drag your ${n[1]} to the ${n[2].toLowerCase()}.`;
+    else hint=V.rolls?`No ${n[1]} for the ${n[2].toLowerCase()}. Roll again.`:`Out of rolls with no ${n[2].toLowerCase()}. End your turn.`;
+    const target=V.scores[opp];
+    const tl=target===undefined?"":`<p class="target">${target===0?`${esc(V.names[opp])} sank. Any treasure wins.`:`${esc(V.names[opp])} banked ${target}. Beat it to win the round.`}</p>`;
+    b.innerHTML=`<h2>Your turn ${rollsTag}</h2><p>${hint}</p>${tl}`;
+  } else {
+    const doing=mode==="solo"?(running?"Rattling the cup...":q?"Weighing the haul...":"Squinting at the dice..."):(running?"Rolling...":!V.rolled?"Getting ready to roll...":q?"Deciding whether to keep the treasure...":"Placing dice...");
+    const target=V.scores[me];
+    const tl=target===undefined?"":`<p class="target">You banked ${target}. They need more than that.</p>`;
+    b.innerHTML=`<h2>${turnName}'s turn ${rollsTag}</h2><p>${doing}</p>${tl}`;
+  }
+
+  // Slots
+  const nn=nextNeedOf(V), dragOn=canDrag();
+  $("articles").innerHTML=NEED.map(([k,v,label])=>{
+    const i=V.dice.findIndex(d=>d.lock===k);
+    const isNext=dragOn&&nn&&nn[0]===k;
+    return `<div class="slot${i>=0?" got":""}${isNext?" next":""}" data-k="${k}">${ICONS[k]}<div class="name">${label}</div><div class="need">needs a ${v}</div>${i>=0?dieHTML(V.dice[i],i):`<div class="hole" aria-label="empty">${v}</div>`}</div>`;
+  }).join("");
+
+  // Tray
+  const canTap=myTurnNow()&&q&&V.rolls>0;
+  $("tray").innerHTML=V.dice.map((d,i)=>d.lock?"":dieHTML(d,i,{tap:canTap,drag:dragOn&&d.v>0})).join("");
+  $("trayLabel").textContent=q?(canTap?"Treasure: tap a die to keep it":"Treasure"):"Loose dice";
+  $("treasure").textContent=q?`${treasureOf(V)} gold`:"";
+
+  // Buttons
+  const rb=$("rollBtn"),kb=$("keepBtn"),nb=$("nextBtn");
+  const mine=V.turn===me&&V.phase==="play";
+  const allHeld=q&&cargoOf(V).every(d=>d.hold);
+  rb.hidden=V.phase==="roundEnd";
+  rb.textContent=!V.rolled||!mine?"Roll the dice":q?(allHeld?"Unkeep a die to reroll":"Reroll treasure"):"Roll again";
+  rb.disabled=!mine||running||V.rolls===0||allHeld||netDown;
+  kb.hidden=!(mine&&V.rolled&&(q||V.rolls===0));
+  kb.textContent=q?`Keep ${treasureOf(V)} gold`:"End turn";
+  kb.disabled=running||netDown;
+  nb.hidden=V.phase!=="roundEnd";
+  nb.textContent=V.over?"New voyage":"Next round";
+  nb.disabled=netDown;
+
+  $("log").innerHTML=V.log.map(e=>`<li>${logLine(e)}</li>`).join("");
+}
+
+/* ================= Input: buttons, holds, drag and drop ================= */
+$("rollBtn").addEventListener("click",()=>{if(myTurnNow()) act({a:"roll"})});
+$("keepBtn").addEventListener("click",()=>{if(myTurnNow()) act({a:"keep"})});
+$("nextBtn").addEventListener("click",()=>act({a:"next"}));
+$("muteBtn").addEventListener("click",toggleMute);
+$("leaveBtn").addEventListener("click",()=>{
+  if(mode!=="solo"&&!netDown&&V&&!confirm("Leave this online game?")) return;
+  leave();
+});
+
+$("tray").addEventListener("click",e=>{
+  const el=e.target.closest(".die.tap"); if(!el||!myTurnNow()||!isQual(V)) return;
+  const i=+el.dataset.i;
+  if(mode==="guest"){V.dice[i].hold=!V.dice[i].hold; render();}
+  act({a:"hold",i});
+});
+
+function tryPlace(i,k){
+  const why=placeProblemOf(V,i,k);
+  if(why){localHint=why; render(); shakeSlot(k); return;}
+  if(mode==="guest"){V.dice[i].lock=k; fresh=new Set([i]); placeSound(); render(); fresh.clear();}
+  act({a:"place",i,k});
+}
+let drag=null;
+function slotAt(x,y){const el=document.elementFromPoint(x,y); return el?el.closest(".slot"):null;}
+function markSlots(i,over){
+  document.querySelectorAll(".slot").forEach(s=>{
+    const ok=!placeProblemOf(V,i,s.dataset.k);
+    s.classList.toggle("ok",ok); s.classList.toggle("over",s===over&&ok);
+  });
+}
+function shakeSlot(k){
+  const s=document.querySelector(`.slot[data-k="${k}"]`); if(!s) return;
+  s.classList.remove("nope"); void s.offsetWidth; s.classList.add("nope");
+}
+$("tray").addEventListener("pointerdown",e=>{
+  const el=e.target.closest(".die.drag"); if(!el||!canDrag()) return;
+  e.preventDefault();
+  const r=el.getBoundingClientRect();
+  drag={i:+el.dataset.i,el,id:e.pointerId,sx:e.clientX,sy:e.clientY,dx:e.clientX-r.left,dy:e.clientY-r.top,w:r.width,ghost:null};
+  el.setPointerCapture(e.pointerId);
+});
+$("tray").addEventListener("pointermove",e=>{
+  if(!drag||e.pointerId!==drag.id) return;
+  if(!drag.ghost){
+    if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<5) return;
+    const g=drag.el.cloneNode(true);
+    g.classList.add("ghost"); g.classList.remove("drag","landed");
+    g.style.width=g.style.height=drag.w+"px";
+    document.body.appendChild(g);
+    drag.ghost=g; drag.el.classList.add("dragging-src");
+  }
+  drag.ghost.style.transform=`translate(${e.clientX-drag.dx}px,${e.clientY-drag.dy}px) scale(1.12) rotate(-6deg)`;
+  markSlots(drag.i,slotAt(e.clientX,e.clientY));
+});
+function endDrag(e,cancel){
+  if(!drag||e.pointerId!==drag.id) return;
+  const d=drag; drag=null;
+  if(!d.ghost){if(!cancel){localHint="Drag the die up to a slot."; render();} return;}
+  d.ghost.remove();
+  const s=cancel?null:slotAt(e.clientX,e.clientY);
+  document.querySelectorAll(".slot").forEach(x=>x.classList.remove("ok","over"));
+  d.el.classList.remove("dragging-src");
+  if(s&&canDrag()) tryPlace(d.i,s.dataset.k);
+}
+$("tray").addEventListener("pointerup",e=>endDrag(e,false));
+$("tray").addEventListener("pointercancel",e=>endDrag(e,true));
+$("tray").addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ") return;
+  const el=e.target.closest(".die.drag"); if(!el||!canDrag()) return;
+  e.preventDefault();
+  tryPlace(+el.dataset.i,nextNeedOf(V)[0]);
+});
+
+/* ================= Menu + online play (PeerJS) ================= */
+const myName=()=>cleanName($("nameInput").value)||"";
+$("nameInput").value=recall("scc-name")||"";
+$("nameInput").addEventListener("change",()=>store("scc-name",myName()));
+
+function menuMsg(t,ok){const m=$("menuMsg"); m.textContent=t||""; m.className="msg"+(ok?" ok":"");}
+function showChoices(){ $("menuChoices").hidden=false; $("hostBox").hidden=true; }
+
+function startSolo(){
+  cleanupNet(); mode="solo"; me="a"; netDown=false;
+  newVoyage({a:myName()||"You",b:"Captain Rook"});
+}
+
+function makeCode(){const A="ABCDEFGHJKMNPQRSTUVWXYZ23456789"; let s=""; for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s;}
+function inviteLink(code){return location.origin+location.pathname+"?join="+code;}
+
+function hostGame(){
+  if(typeof Peer==="undefined"){menuMsg("Online play couldn't load. Check your internet connection and refresh the page."); return;}
+  store("scc-name",myName());
+  cleanupNet(); mode="host"; me="a"; netDown=false;
+  const code=makeCode();
+  menuMsg("Setting up your game...",true);
+  peer=new Peer(PREFIX+code);
+  peer.on("open",()=>{
+    $("menuChoices").hidden=true; $("hostBox").hidden=false;
+    $("hostCode").textContent=code; $("hostCode").dataset.code=code;
+    menuMsg("Waiting for your opponent...",true);
+  });
+  peer.on("connection",c=>{
+    if(conn&&conn.open){c.on("open",()=>{try{c.send({t:"full"})}catch(e){} setTimeout(()=>c.close(),300)}); return;}
+    conn=c; wireConn(c);
+  });
+  peer.on("error",err=>{ if(err.type==="unavailable-id"){hostGame(); return;} netError(err); });
+  peer.on("disconnected",()=>{try{if(peer&&!peer.destroyed) peer.reconnect()}catch(e){}});
+}
+
+function joinGame(raw){
+  const code=String(raw||"").trim().toUpperCase();
+  if(!/^[A-Z0-9]{5}$/.test(code)){menuMsg("Game codes are 5 letters and numbers."); return;}
+  if(typeof Peer==="undefined"){menuMsg("Online play couldn't load. Check your internet connection and refresh the page."); return;}
+  store("scc-name",myName());
+  cleanupNet(); mode="guest"; me="b"; netDown=false;
+  menuMsg("Connecting...",true);
+  peer=new Peer();
+  peer.on("open",()=>{
+    conn=peer.connect(PREFIX+code,{reliable:true});
+    wireConn(conn);
+    joinTimer=setTimeout(()=>{
+      if(!conn||!conn.open){menuMsg("Couldn't connect. Some Wi-Fi networks block direct connections, so try switching to cell data."); cleanupNet();}
+    },15000);
+  });
+  peer.on("error",netError);
+}
+
+function wireConn(c){
+  c.on("open",()=>{
+    clearTimeout(joinTimer);
+    if(mode==="guest"){menuMsg("Connected. Waiting for the host...",true); c.send({t:"hello",name:myName()||"Guest"});}
+  });
+  c.on("data",msg=>{
+    if(!msg||typeof msg!=="object") return;
+    if(mode==="host"){
+      if(msg.t==="hello"&&!G){
+        newVoyage({a:myName()||"Host",b:cleanName(msg.name)||"Guest"});
+        history.replaceState(null,"",location.pathname);
+      } else if(msg.t==="act"&&G) apply("b",msg);
+    } else if(mode==="guest"){
+      if(msg.t==="state"&&msg.g){
+        history.replaceState(null,"",location.pathname);
+        show(msg.g,msg.fx);
+      } else if(msg.t==="full"){menuMsg("That game already has two players."); cleanupNet();}
+    }
+  });
+  c.on("close",lostConnection);
+  c.on("error",lostConnection);
+}
+
+function lostConnection(){
+  if(V){netDown=true; render();}
+  else if(mode){menuMsg("The connection closed. Try again."); cleanupNet(); showChoices();}
+}
+
+function netError(err){
+  const t=err&&err.type;
+  let m;
+  if(t==="peer-unavailable") m="No game found with that code. Check it and try again.";
+  else if(t==="browser-incompatible") m="This browser can't play online. Try Chrome, Safari or Firefox.";
+  else if(["network","server-error","socket-error","socket-closed"].includes(t)) m="Couldn't reach the game server. Check your internet and try again.";
+  else m=`Something went wrong connecting (${t||"unknown"}). Try again.`;
+  clearTimeout(joinTimer);
+  if(V){netDown=true; render();}
+  else {menuMsg(m); cleanupNet(); showChoices();}
+}
+
+function cleanupNet(){
+  clearTimeout(joinTimer);
+  try{if(conn) conn.close()}catch(e){}
+  try{if(peer) peer.destroy()}catch(e){}
+  conn=null; peer=null;
+}
+function leave(){
+  cleanupNet();
+  G=null; V=null; mode=null; netDown=false; queue.length=0;
+  showChoices(); menuMsg("");
+  render();
+}
+
+$("soloBtn").addEventListener("click",startSolo);
+$("hostBtn").addEventListener("click",hostGame);
+$("joinBtn").addEventListener("click",()=>joinGame($("codeInput").value));
+$("codeInput").addEventListener("keydown",e=>{if(e.key==="Enter") joinGame($("codeInput").value)});
+$("cancelHostBtn").addEventListener("click",()=>{cleanupNet(); mode=null; showChoices(); menuMsg("");});
+$("shareBtn").addEventListener("click",async()=>{
+  const code=$("hostCode").dataset.code, url=inviteLink(code);
+  const text=`Play me in Ship, Captain & Crew! Game code ${code}`;
+  if(navigator.share){try{await navigator.share({title:"Ship, Captain & Crew",text,url}); return;}catch(e){if(e&&e.name==="AbortError") return;}}
+  try{await navigator.clipboard.writeText(url); menuMsg("Invite link copied. Waiting for your opponent...",true);}
+  catch(e){menuMsg(`Send them this link: ${url}`,true);}
+});
+
+// Arriving from an invite link fills in the code
+(function(){
+  const code=new URLSearchParams(location.search).get("join");
+  if(code){$("codeInput").value=code.toUpperCase().slice(0,5); menuMsg("Enter your name and tap Join to play.",true);}
+})();
+
+updateMuteBtn();
+render();
+</script>
+</body>
+</html>
